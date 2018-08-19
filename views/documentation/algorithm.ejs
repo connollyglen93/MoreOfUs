@@ -1,0 +1,544 @@
+<h1>Comparing Algorithm</h1>
+<p>Originally I started with a comparator value. 
+    The logic implemented calculated the standard deviation of the total sample daily, 
+    called the comparator value. This value was used as a range for a user’s attribute average. For example;</p>
+
+<p>
+        <br>Attributes = [a,b,c,d,e]
+        <br>User 1
+        <br>A = 42
+        <br>B = 38
+        <br>C = 94
+        <br>D = 10
+        <br>E = 83
+        <br>Average = ((42 + 38 + 94 + 10 + 83)/5) (X)        
+</p>
+<p>
+    Comparator Value(Z) = <img src="/img/sd.png" style="height:75px">  where n = the number of users, x = average of a users’ attributes and 
+    the average of all the averages of users’ attributes.
+</p>
+<p>
+    Users with averages which fall between X+-Z would be matched with User 1.
+</p>
+<p>
+        After sufficient testing, this proved to be inaccurate and insufficient. 
+        Attribute values range from 1 – 100 respectively. 
+        This means the Comparator value would always be less than 100. 
+        Over time, the comparator value would be reduced to a very low value, even possibly down to less than 1, 
+        meaning no users would fall within the range. Separately, 
+        for a user with an average greater than 95 and a comparator value of 10, they would be matches 
+        with users with averages ranging from 85 – 100, which would limit the users which they can be matched 
+        with compared to others. 
+        This proved to be a poor method of matching similar users.
+</p>
+<p>
+        The next approach was to sort the users based on their attributes. 
+        I implemented a bubble sort algorithm on the users’ attributes, or vectors. 
+        Each vector was compared by the attributes, 
+        counting whether the next vector had more higher, lower or equal attributes in total. For example;
+</p>
+
+<p>
+        <br>Vectors
+        <br><br>A : 15-11-16-48-34-70-24-77-87-3
+        <br>B : 9-62-7-74-72-25-17-5-41-77
+        <br>C : 1-57-46-71-42-6-24-55-92-10
+        <br>D : 25-97-33-38-16-82-24-53-13-51
+        <br><br>Sorted Vectors
+        <br><br>B : 9-62-7-74-72-25-17-5-41-77
+        <br>A : 15-11-16-48-34-70-24-77-87-3
+        <br>D : 25-97-33-38-16-82-24-53-13-51
+        <br>C : 1-57-46-71-42-6-24-55-92-10        
+</p>
+
+<p>
+        In the example above, the original vectors were bubble sorted by checking individual attributes in two vectors, 
+        and counting whether there are more higher, more lower or more equal. 
+        This is inaccurate, as the results above show that while each vector has more higher attributes than the previous 
+        vector, vectors not directly next to each other 
+        do not have more higher attributes i.e. C has only 4 higher values than B, but C is higher in the sorted list.
+</p>
+
+<p>
+        To combat this issue, I implemented a quick sort algorithm. 
+        This used a pivot to add lower vectors to the left, and higher vectors to the right. 
+        The result of this algorithm using the test data mentioned above was the same.
+</p>
+
+<p>
+        <br>B : 9-62-7-74-72-25-17-5-41-77
+        <br>A : 15-11-16-48-34-70-24-77-87-3
+        <br>D : 25-97-33-38-16-82-24-53-13-51
+        <br>C : 1-57-46-71-42-6-24-55-92-10        
+</p>
+
+<p>
+        As you can see, the same problem is present. 
+        It quickly became apparent that this was not an appropriate method of sorting vectors.
+</p>
+
+<p>
+        Finally, I decided to compare vectors by the difference between all the attributes. 
+        If X is the attribute in position P of vector A, and Y is the attribute in position P of vector B, 
+        then Y is subtracted from X to make C. For every P, X was subtracted to Y, and the resulting C added 
+        to a result R. If R is negative, the vector A is deemed lower then vector B. If R is positive, 
+        vector A is deemed higher then vector B, and if R is equal to 0, they are considered equal, and the 
+        ordinal position of the vectors does not change. 
+        This vector comparison was used with the quick sort algorithm. The result of this is 
+</p>
+
+<p>
+        A : 15-11-16-48-34-70-24-77-87-3
+        <br>B : 9-62-7-74-72-25-17-5-41-77
+        <br>C : 1-57-46-71-42-6-24-55-92-10
+        <br>D : 25-97-33-38-16-82-24-53-13-51        
+</p>
+
+<p>
+        For more context as to why the sorted vectors are equal to the sample set, we can look at the differences found:
+</p>
+
+<p>
+         D&lt=&gtA  47
+        <br> D&lt=&gtB  43
+        <br> D&lt=&gtC  28
+        <br> C&lt=&gtA  19
+        <br> C&lt=&gtB  15
+        <br> B&lt=&gtA  4
+        
+</p>
+
+<p>
+        From the differences, we can see that B is greater than A by 4, 
+        but less then D and C by 43 and 15 respectively. 
+        This proves to be true when we manually calculate the differences. The sample was already sorted in this case.
+</p>
+
+<p>
+        Using this new algorithm, users can be paired with users who are closest to them in the sorted vectors. 
+        This algorithm also accepts and works with single attribute value checks. 
+        If position 1 was an attribute named “Punctuality”, then the following sorted vectors would be returned 
+        if they are sorted by “Punctuality”, or attribute 1, With each vector starting with an attribute value of 0:
+</p>
+
+<p>
+        A : 15-11-16-48-34-70-24-77-87-3	
+        <br>C : 1-57-46-71-42-6-24-55-92-10
+        <br>B : 9-62-7-74-72-25-17-5-41-77
+        <br>D : 25-97-33-38-16-82-24-53-13-51        
+</p>
+
+<p>
+        It is plainly clear that these vectors are sorted by “Punctuality”, from lowest to highest. 
+        This solution will allow users to refine their search by selecting attributes which matter most to them when 
+        searching for users. This algorithm also allows for multiple attribute selection. 
+        For example, when attributes 0,1 and 8 are selected, the result is:
+</p>
+
+<p>
+        <br>B : 9-62-7-74-72-25-17-5-41-77
+        <br>A : 15-11-16-48-34-70-24-77-87-3	
+        <br>D : 25-97-33-38-16-82-24-53-13-51
+        <br>C : 1-57-46-71-42-6-24-55-92-10
+        <br>D&lt=&gtA 22
+        <br>D&lt=&gtB 23
+        <br>D&lt=&gtC -15
+        <br>B&lt=&gtA -1 
+</p>
+
+<p>
+        So D is greater than A and B, but less then C, and B is less than A.
+        <br>(D) = 25+97+13 = 145
+        <br>(B) = 9 + 62 + 41 = 112
+        <br>(A) = 15 + 11 + 87 = 113
+        <br>(C) = 1 + 57 + 92 = 150
+        <br>112(B) &lt 113(A) &lt 145(D) &lt 150(C)         
+</p>
+<canvas id="mySampleChart" width="400" height="400"></canvas>
+<canvas id="myChart" width="400" height="400"></canvas>
+<script>
+var ctx = document.getElementById("mySampleChart").getContext('2d');
+var datasets =[];  
+var vectors = testQuickSortDifference2();
+let colors = [
+                'rgba(255, 0, 0, 0.2)',
+                'rgba(0, 0, 255, 0.2)',
+                'rgba(0, 255, 0, 0.2)',
+                'rgba(255, 255, 0, 0.2)',
+            ];
+for(let vectorKey in vectors){
+    let dataset = {};
+    dataset.label = vectorKey;
+    dataset.data = vectors[vectorKey];
+    dataset.backgroundColor = colors.pop();
+    datasets.push(dataset);
+}
+var myChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+        labels: ["Skill", "Punctuality", "Dribbling", "Speed", "Sportsmanship", "Teamwork", "Timing", "Power", "Leadership", "Strategy"],
+        datasets: datasets
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+    }
+});
+
+ctx = document.getElementById("myChart").getContext('2d');
+datasets =[];  
+vectors = testQuickSortDifference();
+colors = [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)',
+                'rgba(159, 255, 64, 0.2)',
+                'rgba(200, 200, 81, 0.2)',
+                'rgba(1, 100, 200, 0.2)',
+                'rgba(15, 255, 30, 0.2)',
+                'rgba(100, 159, 100, 0.2)',
+                'rgba(255, 255, 0, 0.2)'
+            ];
+for(let vectorKey in vectors){
+    let dataset = {};
+    dataset.label = vectorKey;
+    dataset.data = vectors[vectorKey];
+    dataset.backgroundColor = colors.pop();
+    datasets.push(dataset);
+}
+myChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+        labels: ["Skill", "Punctuality", "Dribbling", "Speed", "Sportsmanship", "Teamwork", "Timing", "Power", "Leadership", "Strategy"],
+        datasets: datasets
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+    }
+});
+
+
+function compareVectors(a, b, selection){
+    let length = a.length;
+  
+    let higher = 0;
+    let equal = 0;
+    let lower = 0;
+    let compare = 0;
+    if(selection){
+      for(let i = 0; i < selection.length; i++){
+          compare += (a[selection[i]] - b[selection[i]]);
+      }
+      return compare;
+    }else{
+      for(let i = 0; i < length; i++){
+          compare += (a[i] - b[i]);
+      }
+      return compare;
+    } 
+  }
+
+    function compareVectorsOld(a, b){
+    let length = a.length;
+  
+    let higher = 0;
+    let equal = 0;
+    let lower = 0;
+    let compare = 0;
+      for(let i = 0; i < length; i++){
+          if(a[i] > b[i]){
+              higher++;
+          }else if(a[i] < b[i]){
+              lower++;
+          }else{
+              equal++;
+          }
+      }
+    
+  if(higher > lower && higher > equal){
+      return 1; //more higher numbers
+    }else if(lower > higher && lower > equal){
+      return -1; //more lower numbers
+    }else if(equal >= higher && equal >= lower){ //more equal numbers, so check which is better, higher or lower (tie breaker)
+      if(higher > lower){
+        return 1;
+      }else if(lower > higher){
+        return -1;
+      }else{
+        return 0; //equal number of higher and lower, but more equal numbers overall
+      }
+    } else if (higher > lower){
+      return 1;
+    }	else if (lower > higher){
+      return -1;
+    }
+    return 0; //equal number of higher, lower and equal
+    
+  }
+  
+  function bubbleSortVectors(vectors, selection){
+  
+    let keys = Object.keys(vectors);
+    let keySorting = keys;
+    console.log("keys");
+    console.log(keys);
+    for(let i = 0; i < keys.length - 1; i++){
+      let compare = compareVectors(vectors[keys[i]], vectors[keys[i+1]], selection);
+      if(compare > -1){
+        let tmp = keySorting[i];  //Temporary variable to hold the current number
+        keySorting[i] = keySorting[i+1];  //Replace current number with adjacent number
+        keySorting[i+1] = tmp; //Replace adjacent number with current number
+      }
+    }
+  
+    console.log("Sorted Keys");
+    console.log(keySorting);
+    let sortedVectors = [];
+    for(let i = 0 ; i < keySorting.length; i++){
+      sortedVectors[" " + keySorting[i]] = vectors[keySorting[i]]; //convert to original format
+    }
+    return sortedVectors;
+  }
+  
+  function bubbleSortVectorsOld(vectors, selection){
+  
+    let keys = Object.keys(vectors);
+    let keySorting = keys;
+    console.log("keys");
+    console.log(keys);
+    for(let i = 0; i < keys.length - 1; i++){
+      let compare = compareVectorsOld(vectors[keys[i]], vectors[keys[i+1]], selection);
+      if(compare > -1){
+        let tmp = keySorting[i];  //Temporary variable to hold the current number
+        keySorting[i] = keySorting[i+1];  //Replace current number with adjacent number
+        keySorting[i+1] = tmp; //Replace adjacent number with current number
+      }
+    }
+  
+    console.log("Sorted Keys");
+    console.log(keySorting);
+    let sortedVectors = [];
+    for(let i = 0 ; i < keySorting.length; i++){
+      sortedVectors[" " + keySorting[i]] = vectors[keySorting[i]]; //convert to original format
+    }
+    return sortedVectors;
+  }
+  
+  function quickSortKeys(keys, vectors, selection) {
+      if (keys.length <= 1) { 
+          return keys;
+      }	
+      var left = [];
+      var right = [];
+      var newArray = [];
+      var pivot = keys.pop();
+      var length = keys.length;
+  
+      for (let i = 0; i < keys.length; i++) {
+          let compare = compareVectors(vectors[pivot], vectors[keys[i]], selection);
+          console.log(pivot + "<=>" + keys[i] + " Compare: " + compare);
+          if (compare > -1) {// if pivot vector is greater than or equal to vectors[keys[i]]
+              left.push(keys[i]);
+          } else {
+              right.push(keys[i]);
+          }
+      }
+      
+  
+      return newArray.concat(quickSortKeys(left, vectors, selection), pivot, quickSortKeys(right, vectors, selection));
+  }
+  
+  function quickSortKeysOld(keys, vectors, selection) {
+      if (keys.length <= 1) { 
+          return keys;
+      }	
+      var left = [];
+      var right = [];
+      var newArray = [];
+      var pivot = keys.pop();
+      var length = keys.length;
+  
+      for (let i = 0; i < keys.length; i++) {
+          let compare = compareVectorsOld(vectors[pivot], vectors[keys[i]], selection);
+          if (compare > -1) {// if pivot vector is greater than or equal to vectors[keys[i]]
+              left.push(keys[i]);
+          } else {
+              right.push(keys[i]);
+          }
+      }
+      
+  
+      return newArray.concat(quickSortKeysOld(left, vectors, selection), pivot, quickSortKeysOld(right, vectors, selection));
+  }
+  
+  function quickSortVectorsOld(vectors, selection){
+      let keys = Object.keys(vectors);
+      console.log("Original Keys");
+      console.log(keys);
+      let sortedKeys = quickSortKeysOld(keys, vectors, selection);
+      console.log("Sorted Keys");
+      console.log(sortedKeys);
+      let sortedVectors = [];
+      for(let i = 0 ; i < sortedKeys.length; i++){
+          sortedVectors[" " + sortedKeys[i]] = vectors[sortedKeys[i]]; //convert to original format
+      }
+      return sortedVectors;
+  }
+  
+  function quickSortVectors(vectors, selection){
+      let keys = Object.keys(vectors);
+      console.log("Original Keys");
+      console.log(keys);
+      let sortedKeys = quickSortKeys(keys, vectors, selection);
+      console.log("Sorted Keys");
+      console.log(sortedKeys);
+      let sortedVectors = [];
+      for(let i = 0 ; i < sortedKeys.length; i++){
+          sortedVectors[" " + sortedKeys[i]] = vectors[sortedKeys[i]]; //convert to original format
+      }
+      return sortedVectors;
+  }
+  
+  function testBubbleSort(...selection){        
+      //problems faced: Objects auto sorting keys, comparing 2 vectors to find a higher vector
+      //problems present: User with one extremely low attribute would still be paired
+      //Testing Implemented: Manually checked small sample result (10 vectors). All vectors are in the correct order
+      //Testing required: Hard code vectors with larger size and compare both sorts. Use accuracy to make graphs?
+      //Solution: Compare highest and lowest value in each vector against higher/lower vector? Implement single value sorting
+      //next step: Draw graphs and consider other sorting algorithm to improve efficiency/accuracy. Create vector order testing suite. OPTIONAL MULTI VALUE SEARCHING?
+  
+    let vectors = {};
+  
+    for(i = 0; i < 10; i++){
+      let vector = [];
+      for(j = 0; j < 10; j++){
+        vector.push(Math.floor(Math.random() * 100));
+      }
+      vectors[Math.floor(Math.random() * 10000)] = vector;
+    }
+  
+  
+    console.log("Original Vectors");
+    for(let key in vectors){
+      console.log(key);
+      console.log(vectors[key]);
+    }
+    let sortedVectors = bubbleSortVectorsOld(vectors);
+    console.log("Sorted Vectors");
+    for(let key in sortedVectors){
+      console.log(key);
+      console.log(sortedVectors[key]);
+    }
+  };
+
+  function testQuickSort(...selection){    
+    let vectors = {};
+      console.log(selection);
+    
+    for(i = 0; i < 10; i++){
+      let vector = [];
+      for(j = 0; j < 10; j++){
+        vector.push(Math.floor(Math.random() * 100));
+      }
+      vectors[Math.floor(Math.random() * 10000)] = vector;
+    }
+  
+  
+    console.log("Original Vectors");
+    for(let key in vectors){
+      console.log(key);
+      console.log(vectors[key]);
+    }
+    let sortedVectors = quickSortVectorsOld(vectors, selection);
+    console.log("Sorted Vectors");
+    for(let key in sortedVectors){
+      console.log(key);
+      console.log(sortedVectors[key]);
+    }
+      
+  };
+  
+  function testBubbleSortDifference(...selection){    
+      let vectors = {};
+      for(i = 0; i < 10; i++){
+        let vector = [];
+        for(j = 0; j < 10; j++){
+          vector.push(Math.floor(Math.random() * 100));
+        }
+        vectors[Math.floor(Math.random() * 10000)] = vector;
+      }
+      
+       console.log("Original Vectors");
+        for(let key in vectors){
+          console.log(key);
+          console.log(vectors[key]);
+        }
+        let sortedVectors = bubbleSortVectors(vectors, selection);
+        console.log("Sorted Vectors");
+        for(let key in sortedVectors){
+          console.log(key);
+          console.log(sortedVectors[key]);
+        }
+      
+  };
+  
+  function testQuickSortDifference(...selection){
+      let vectors = {};
+      for(i = 0; i < 10; i++){
+        let vector = [];
+        for(j = 0; j < 10; j++){
+          vector.push(Math.floor(Math.random() * 100));
+        }
+        vectors[Math.floor(Math.random() * 10000)] = vector;
+      }
+      
+       console.log("Original Vectors");
+        for(let key in vectors){
+          console.log(key);
+          console.log(vectors[key]);
+        }
+        let sortedVectors = quickSortVectors(vectors, selection);
+        console.log("Sorted Vectors");
+        for(let key in sortedVectors){
+          console.log(key);
+          console.log(sortedVectors[key]);
+        }
+        return sortedVectors;
+  };
+
+    function testQuickSortDifference2(...selection){
+      let vectors = {};
+      vectors["A"] = [15,11,16,48,34,70,24,77,87,3];
+	  vectors["B"] = [9,62,7,74,72,25,17,5,41,77];
+	  vectors["C"] = [1,57,46,71,42,6,24,55,92,10];
+	  vectors["D"] = [25,97,33,38,16,82,24,53,13,51];
+      
+       console.log("Original Vectors");
+        for(let key in vectors){
+          console.log(key);
+          console.log(vectors[key]);
+        }
+        let sortedVectors = quickSortVectors(vectors, selection);
+        console.log("Sorted Vectors");
+        for(let key in sortedVectors){
+          console.log(key);
+          console.log(sortedVectors[key]);
+        }
+        return sortedVectors;
+  };
+
+</script>

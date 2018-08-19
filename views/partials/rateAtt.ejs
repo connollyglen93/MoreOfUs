@@ -1,0 +1,12 @@
+
+<div class="attributeRateLabel">
+    <h4 style="font-weight:bold"><%= attributeName %></h4>
+</div>
+<% if (disabled) { %>
+<div style="text-align:center">
+<h2>Rated!</h2>
+</div>
+<% }else{ %>
+<input id="rateuserattribute-<%= participant %>-<%= attributeIndex%>" type="text" class="userAttributeRating"  data-min=0 data-max=5 data-step=0.2 data-size="sm"
+title="" > 
+<% } %>

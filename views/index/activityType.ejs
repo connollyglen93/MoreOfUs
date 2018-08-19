@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<head>
+    <script src="/javascripts/jquery-3.3.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/jTinder.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/stylesheets/activityType.css' />
+</head>
+<body>
+
+<div class="slider-wrap">
+    <div class="slider" id="slider">
+        <div class="holder container">
+        <% for(index in activityTypes) {  %>
+            <% nextIndex = (index == (activityTypes.length - 1)) ? 0 : parseInt(index, 10) + 1;
+                prevIndex = (index == 0) ? activityTypes.length - 1 : index - 1 ;
+            %>
+            <div class="slide" id="slide-<%= index%>">
+                <div id="container">
+                    <a href="/user/register/<%= activityTypes[index].name%>">
+                        <h1 id="activityType"><%= activityTypes[index].name%></h1>
+                    </a>
+                    <nav class="slider-nav">
+                        <a class="apex-lft" onclick="setBackground('<%=activityTypes[prevIndex].background_color%>')" href="#slide-<%= prevIndex %>"><i></i></a>
+                        <a class="apex-right" onclick="setBackground('<%=activityTypes[nextIndex].background_color%>')" href="#slide-<%= nextIndex %>"><i></i></a>
+                    </nav>
+                </div>
+            </div>
+        <% } %>
+        </div>
+    </div>
+</div>
+<div>
+</div>
+<div>
+</div>
+<div>
+
+</div>
+</body>
+</html>
+<style>
+    .slider-wrap {
+        width: 50%;
+        padding-left: 0px;
+        padding-right: 0px;
+        height: 500px;
+    }
+    .slider {
+        width: 1000px;
+        height: 500px;
+        overflow-x: hidden;
+        overflow-y: hidden;
+    }
+    .slide:before {
+        height:40%
+    }
+    .holder {
+        width: 225%;
+    }
+    .slide {
+        float: left;
+        width: 1000px;
+        height: 500px;
+        position: relative;
+        background-position: -100px 0;
+    }
+
+    div {
+        padding: 0px;
+    }
+
+    body{
+        margin: 0px;
+    }
+
+    .apex-lft {
+        float:left;
+        margin-left: 10px;
+        width:0px;
+        height:0px;
+        border-top:12px solid transparent;
+        border-bottom:12px solid transparent;
+        border-right:12px solid #fff;
+    }
+    .apex-right {
+        float:right;
+        margin-right: 10px;
+        width:0px;
+        height:0px;
+        border-top:12px solid transparent;
+        border-bottom:12px solid transparent;
+        border-left:12px solid #fff;
+    }
+
+</style>
+<script>
+
+    var width = <%= activityTypes.length %>00;
+    var multiple = width/100;
+    var sectionWidth = 100/multiple;
+    function setBackground(color){
+        if(color == '#FFFFFF'){
+            $('.apex-lft').css('border-right-color', 'rgb(0, 0, 0)');
+            $('.apex-right').css('border-left-color', 'rgb(0, 0, 0)');
+        }else{
+            $('.apex-lft').css('border-right-color', 'rgb(255, 255, 255)');
+            $('.apex-right').css('border-left-color', 'rgb(255, 255, 255)');
+        }
+
+
+        $('body').css('background-color', color);
+    }
+    $(document).ready(function(){
+
+        setBackground("<%=activityTypes[0].background_color%>")
+
+        console.log(width);
+
+        $('body').height($(document).height());
+        $('.holder').width(width + '%');
+        $('.slider').width($(document).width());
+        $('.slider').height($(document).height());
+
+        /*
+                $('.slider').offsetHeight($(document).offsetHeight());
+        */
+        $('.slide').css('width', $(document).width());
+        $('.slide').height($(document).height());
+
+        /*
+                $('.slide').css('height', $(document).offsetHeight());
+        */
+        $("#slider").on("scroll", function() {
+            $(".slide").css({
+                "background-position": $(this).scrollLeft()/6-100+ "px 0"
+            });
+        });
+
+        slider.slideWidth = $('.slide').width();
+
+    })
+
+    var slider = {
+
+        // Not sure if keeping element collections like this
+        // together is useful or not.
+        el: {
+            slider: $("#slider"),
+            allSlides: $(".slide"),
+            sliderNav: $(".slider-nav"),
+            allNavButtons: $(".slider-nav > a")
+        },
+
+        timing: 800,
+        slideWidth: 300, // could measure this
+
+        // In this simple example, might just move the
+        // binding here to the init function
+        init: function() {
+            this.bindUIEvents();
+        },
+
+        bindUIEvents: function() {
+            // You can either manually scroll...
+            this.el.slider.on("scroll", function(event) {
+                slider.moveSlidePosition(event);
+            });
+            // ... or click a thing
+            this.el.sliderNav.on("click", "a", function(event) {
+                slider.handleNavClick(event, this);
+            });
+            // What would be cool is if it had touch
+            // events where you could swipe but it
+            // also kinda snapped into place.
+        },
+
+        moveSlidePosition: function(event) {
+            // Magic Numbers =(
+            this.el.allSlides.css({
+                "background-position": $(event.target).scrollLeft()/6-100+ "px 0"
+            });
+        },
+
+        handleNavClick: function(event, el) {
+            event.preventDefault();
+            var position = $(el).attr("href").split("-").pop();
+
+            this.el.slider.animate({
+                scrollLeft: position * this.slideWidth
+            }, this.timing);
+
+            this.changeActiveNav(el);
+        },
+
+        changeActiveNav: function(el) {
+            this.el.allNavButtons.removeClass("active");
+            $(el).addClass("active");
+        }
+
+    };
+
+    slider.init();
+
+
+
+
+</script>

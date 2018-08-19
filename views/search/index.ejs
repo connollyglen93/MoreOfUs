@@ -1,0 +1,399 @@
+<html>
+<head>
+    <title>More Of Us</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src="/javascripts/jquery-3.3.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/jTinder.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet">
+    <!-- jQuery lib -->
+    <script type="text/javascript" src="/javascripts/jquery.min.js"></script>
+    <!-- transform2d lib -->
+    <script type="text/javascript" src="/javascripts/jquery.transform2d.js"></script>
+    <!-- jTinder lib -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+<body>
+<div id="currentUserHolder" style="background-color:#ffffff; height:40%; width: 40%; margin-top:5%; padding-right:1%; padding-left:1%; margin-left:auto; margin-right:auto;">
+<table style="margin-left:auto; margin-right:auto">
+<thead>
+<tr>
+    <% attributeNames.forEach(function(attName){ %>
+        <th><%=attName.name%></th>
+    <% })%>
+</tr>
+</thead>
+<tbody>
+    <tr>
+    <% currentUser.attributeValues.forEach(function(value){ %>
+        <td style="text-align: center"><%= value %></td>
+    <% }) %>
+    </tr>
+</tbody>
+</table>
+    <canvas class="attributeGraphs" id="attributeChart-self" width="50" height="50"></canvas>
+</div>
+<div id="filterLand" style="border-radius: 25px;margin-top: 5px; width: 50%;padding: 3px 3px 3px 3px;margin-right:auto; margin-left:auto; text-align:center; background-color: #1D2733;">
+    <div id="filters">
+        <% for(let i = 0; i < attributeNames.length; i++){ 
+            if(attributeNames[i].selected){ %>
+                <label style="color:white; background-color: #2ECC71" for="<%=attributeNames[i].name%>|<%=i%>"><%=attributeNames[i].name%></label>
+                <input type="checkbox" class="filter" id="<%=attributeNames[i].name%>|<%=i%>">
+        <% }else{ %>
+            <label style="color:white" for="<%=attributeNames[i].name%>|<%=i%>"><%=attributeNames[i].name%></label>
+            <input type="checkbox" class="filter" id="<%=attributeNames[i].name%>|<%=i%>">
+       <% }
+    } %>         
+    </div>
+    <a href="/search/search/<%=activity._id%>" id="submitFilters" class="filterSubmit">Apply Filter</a>
+</div>
+
+<div class="slider-wrap">
+    <div class="slider" id="slider">
+        <input type="hidden" id="source" value="<%=currentUser._id%>">
+        <input type="hidden" id="activity" value="<%=activity._id%>">
+        <div class="holder container">
+            <% if(similarUsers.length > 0) { %>
+            <% similarUsers.forEach(function(user, index){   %>
+            <% nextIndex = (index == (similarUsers.length - 1)) ? 0 : parseInt(index, 10) + 1;
+                prevIndex = (index == 0) ? similarUsers.length - 1 : index - 1 ;
+            %>
+            <div class="slide" id="slide-<%= index%>">
+                <div class="card">
+<!--
+                    <img src="img_avatar.png" alt="Avatar" style="width:100%"> profile picture?
+-->
+                    <div class="cardContainer">
+                        <a class="searchAction" href="/activity/view/<%=activityType%>/<%=activity._id%>"><button class="searchAction">Back To Activity</button></a>
+                        <div class="cardDivContainer">
+                            <div class="a">
+                            <h4><b><%= user.username %></b></h4>
+                            <h4><b><%= user.userId %></b></h4>
+                            <table>
+                                <thead>
+                                <tr>
+                                    <% attributeNames.forEach(function(attName){ %>
+                                        <th><%=attName.name%></th>
+                                    <% })%>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                    <% user.attributeValues.forEach(function(value){ %>
+                                        <td style="text-align: center"><%= value %></td>
+                                    <% }) %>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            </div>
+                            <div class="b">
+                                <canvas class="attributeGraphs" id="attributeChart-<%= user.userId %>" width="125" height="100"></canvas>
+                            </div>
+                        </div> 
+                        <nav class="slider-nav">
+                            <a class="apex-lft" href="#slide-<%= prevIndex %>"><i></i></a>
+                            <a class="apex-right" href="#slide-<%= nextIndex %>"><i></i></a>
+                        </nav>
+                        <button class="searchAction" id="<%=user.id%>-invite" onclick="inviteUser(this)">Invite User</button>
+                        <button class="searchAction" id="<%=user.id%>-message" onclick="messageUser(this)">Message User</button>
+                    </div>
+                </div>
+            </div>
+            <% }) %>
+            <% }else { %>
+            <div class="slide" id="slide-0">
+                <div class="card">
+                    <div class="cardContainer">
+                        <h4><b>There are no other users :(</b></h4>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+        </div>
+        <input type="hidden" id="token" name="_csrf" value="<%=csrf%>">
+    </div>
+</div>
+</body>
+</html>
+<style>
+
+    .slider-wrap {
+        padding-left: 0px;
+        padding-right: 0px;
+        height: 500px;
+    }
+    .slider {
+        width: 1000px;
+        height: 500px;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        margin-right: auto;
+        margin-left: auto;
+    }
+    .holder {
+        width: 225%;
+    }
+    .slide {
+        float: left;
+        width: 1000px;
+        height: 650px;
+        position: relative;
+        background-position: -100px 0;
+/*         margin-top: 2%;
+ */    }
+
+    div {
+        padding: 0px;
+    }
+
+    body{
+        margin: 0px;
+        background-color: #2ECC71;
+    }
+
+    .apex-lft {
+        float:left;
+        margin-left: 10px;
+        width:0px;
+        height:0px;
+        border-top:12px solid transparent;
+        border-bottom:12px solid transparent;
+        border-right:12px solid #000;
+        border-right-color: rgb(0, 0, 0);
+    }
+    .apex-right {
+        float:right;
+        margin-right: 10px;
+        width:0px;
+        height:0px;
+        border-top:12px solid transparent;
+        border-bottom:12px solid transparent;
+        border-left:12px solid #000;
+        border-left-color: rgb(0, 0, 0);
+    }
+
+    .slide:before {
+        background: linear-gradient(transparent, ghostwhite);
+    }
+
+</style>
+
+<script>
+
+    $('.filter').each(function(){
+        $(this).on('change', function(){
+            let appendHtml = [];
+            $("#filters :input").each(function(){
+                if($(this).is(":checked")){
+                    let brokenId = $(this).attr('id').split("|");
+                    appendHtml.push(brokenId[1]);
+                }
+            })
+            console.log(appendHtml);
+            if(appendHtml.length > 0){ 
+                let json = encodeURIComponent(JSON.stringify(appendHtml));
+                $('#submitFilters').attr('href', "/search/search/<%=activity._id%>?attrSelection=" + json);
+            }
+        })
+    })
+
+    let colors = [];
+    let labels = [];
+    let attributes = [];
+    var datasets = [];  
+    var ctx;
+    let dataset = {};
+    var myChart;
+
+    ctx = document.getElementById("attributeChart-self").getContext('2d');
+        datasets =[];  
+        colors = [
+                        'rgba(255, 0, 0, 0.2)',
+                        'rgba(0, 0, 255, 0.2)',
+                        'rgba(0, 255, 0, 0.5)',
+                    ];
+
+        attributes = [];
+        labels = [];
+        <% attributeNames.forEach(function(attName){ %>
+            labels.push("<%= attName.name %>");
+        <% })%>
+        <% currentUser.attributeValues.forEach(function(value){ %>
+            attributes.push(<%=value%>);
+        <% }) %>
+            dataset = {};
+            dataset.label = "You";
+            dataset.data = attributes;
+            dataset.backgroundColor = colors.pop();
+            datasets.push(dataset);
+            console.log(labels);
+            console.log(attributes);
+        myChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scale: {
+                    ticks: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+
+    <% if(similarUsers.length > 0) { %>
+    <% similarUsers.forEach(function(user, index){   %>
+        ctx = document.getElementById("attributeChart-<%= user.userId %>").getContext('2d');
+        datasets =[];  
+        colors = [
+                        'rgba(255, 0, 0, 0.2)',
+                        'rgba(0, 0, 255, 0.2)',
+                        'rgba(0, 255, 0, 0.5)',
+                    ];
+
+        attributes = [];
+        labels = [];
+        <% attributeNames.forEach(function(attName){ %>
+            labels.push("<%= attName.name %>");
+        <% })%>
+        <% user.attributeValues.forEach(function(value){ %>
+            attributes.push(<%=value%>);
+        <% }) %>
+            dataset = {};
+            dataset.label = "<%=user.username%>";
+            dataset.data = attributes;
+            dataset.backgroundColor = colors.pop();
+            datasets.push(dataset);
+            console.log(labels);
+            console.log(attributes);
+        myChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scale: {
+                    ticks: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+        console.log(myChart);
+    <% })} %>
+    function inviteUser(element){
+        let source = $('#source').val();
+        let activity = $('#activity').val();
+        let target = $(element).attr('id');
+        let csrf = $('#token').val();
+        target = target.split('-');
+        target = target[0];
+        let postData = {target : target, source: source, activityId : activity, _csrf: csrf};
+        $.ajax({
+            type: "POST",
+            url: '/user/sendInvite',
+            data: postData,
+            dataType: 'json',
+            success: function(data){
+                $(element).html(data.msg);
+                $(element).prop('onclick',null).off('click');
+            }
+        });
+    }
+
+    function messageUser(element){
+        console.log(element);
+    }
+
+    var width = parseInt(<%= similarUsers.length %>00);
+    var multiple = width/100;
+    var sectionWidth = 100/multiple;
+    $(document).ready(function(){
+        console.log(width);
+
+        $('body').height($(document).height());
+        $('.holder').width(width + '%');
+        $('.holder').height('100%');
+        $('.slider').width('800');
+
+        $('.slide').css('width', '800');
+
+        $("#slider").on("scroll", function() {
+            $(".slide").css({
+                "background-position": $(this).scrollLeft()/6-100+ "px 0"
+            });
+        });
+
+        slider.slideWidth = $('.slide').width();
+
+    })
+
+    var slider = {
+        // Not sure if keeping element collections like this
+        // together is useful or not.
+        el: {
+            slider: $("#slider"),
+            allSlides: $(".slide"),
+            sliderNav: $(".slider-nav"),
+            allNavButtons: $(".slider-nav > a")
+        },
+
+        timing: 800,
+        slideWidth: 300, // could measure this
+
+        // In this simple example, might just move the
+        // binding here to the init function
+        init: function() {
+            this.bindUIEvents();
+        },
+
+        bindUIEvents: function() {
+            // You can either manually scroll...
+            this.el.slider.on("scroll", function(event) {
+                slider.moveSlidePosition(event);
+            });
+            // ... or click a thing
+            this.el.sliderNav.on("click", "a", function(event) {
+                slider.handleNavClick(event, this);
+            });
+            // What would be cool is if it had touch
+            // events where you could swipe but it
+            // also kinda snapped into place.
+        },
+
+        moveSlidePosition: function(event) {
+            // Magic Numbers =(
+            this.el.allSlides.css({
+                "background-position": $(event.target).scrollLeft()/6-100+ "px 0"
+            });
+        },
+
+        handleNavClick: function(event, el) {
+            event.preventDefault();
+            var position = $(el).attr("href").split("-").pop();
+
+            this.el.slider.animate({
+                scrollLeft: position * this.slideWidth
+            }, this.timing);
+
+            this.changeActiveNav(el);
+        },
+
+        changeActiveNav: function(el) {
+            this.el.allNavButtons.removeClass("active");
+            $(el).addClass("active");
+        }
+    };
+    slider.init();
+
+</script>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>More Of Us</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/stylesheets/css-grid.css' />
+    <script src="/javascripts/jquery-3.3.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/jTinder.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet">
+    <!-- jQuery lib -->
+    <script type="text/javascript" src="/javascripts/jquery.min.js"></script>
+    <!-- transform2d lib -->
+    <script type="text/javascript" src="/javascripts/jquery.transform2d.js"></script>
+    <!-- jTinder lib -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+
+</head>
+<body id="mainBody">
+<div class="navbar">
+    <ul>
+        <li><a class="navButtons" href="/profile">Home</a></li>
+        <li><a class="navButtons">Notifications</a>
+            <ul id="notificationsList">
+            </ul>
+
+        </li>
+    </ul>
+</div>
+<div id="bodyholder">
+<%- body%>
+</div>
+</body>
+</html>
+
+<script>
+
+   /* $.ajax({
+        type: "GET",
+        url: '/ws/getPort',
+        dataType: 'json',
+        success: function(data){
+            if(data.result){
+                var ws = new WebSocket('ws://localhost:' + data.port);
+                console.log('listening for ' + data.login + ' on port ' + data.port);
+                // event emmited when connected
+                ws.onopen = function () {
+                    console.log('websocket is connected ...')
+                    // sending a send event to websocket server
+                    ws.send('connected')
+                }
+                // event emmited when receiving message
+                ws.onmessage = function (ev) {
+                    let data = JSON.parse(ev.data);
+                    console.log(data);
+                    if(data.result !== undefined && data.result){
+                        $('#notificationsList').empty();
+                        if(data.notifications.length > 0){
+                            data.notifications.forEach(function(notification){
+                                $('#notificationsList').append('<li><a href=\'/activity/view/'+data.type+'/'+notification.activity+'\'>' + notification.content  + '</a></li>')
+                            })
+                        }else{
+                            $('#notificationsList').append('<li>No Notifications</li>')
+                        }
+                    }else if(!data.result){
+                        console.log(data.error);
+                    }
+                }
+            }else{
+                console.log(data.message);
+            }
+        }
+    });*/
+
+   $.ajax({
+       type: "GET",
+       url: '/ws/notifications',
+       dataType: 'json',
+       success: function(data){
+           console.log(data);
+           if(data.result){
+               if(data.result !== undefined && data.result){
+                   $('#notificationsList').empty();
+                   if(data.notifications.length > 0){
+                       data.notifications.forEach(function(notification){
+                           $('#notificationsList').append('<li><a href=\'/activity/view/'+data.type+'/'+notification.activity+'\'>' + notification.content  + '</a></li>')
+                       })
+                   }else{
+                       $('#notificationsList').append('<li>No Notifications</li>')
+                   }
+               }else if(!data.result){
+                   console.log(data.error);
+               }
+           }else{
+               console.log(data.message);
+           }
+       }
+   });
+</script>

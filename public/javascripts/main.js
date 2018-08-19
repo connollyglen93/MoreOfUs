@@ -1,0 +1,3 @@
+/**
+ * jTinder initialization
+ */

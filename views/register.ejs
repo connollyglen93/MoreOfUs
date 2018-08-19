@@ -1,0 +1,29 @@
+<header>
+    <a style="left:0; margin-left: 25%" class="top-button" href="/">Activities</a>
+    <h1><%=activityType%></h1>
+    <a style="right:0; margin-right: 25%" class="top-button" href="/user/login/<%=activityType%>">Login</a>
+</header>
+<main>
+    <form id="registration-form" style="text-align: center" action="/user/register" method="POST">
+        <h1>Register</h1>
+        <% if(typeof error !== 'undefined') { %>
+        <h4 style='color:red'><%=error%></h4>
+        <% } %>
+        <input type="hidden" name="activityType" value="<%=activityType%>">
+        <input type="hidden" name="_csrf" value="<%=csrf%>">
+
+        <input type="text" placeholder="Username" name="username">
+        <input type="text" id="datepicker" id="dob" placeholder="Date of Birth" name="dob">
+        <input type="password" placeholder="Password" name="password1">
+        <input type="password" placeholder="Confirm Password" name="password2">
+        <input type="submit" value="Register">
+    </form>
+</main>
+<footer>
+</footer>
+
+<script>
+    $( function() {
+        $( "#datepicker" ).datepicker();
+    } );
+</script>

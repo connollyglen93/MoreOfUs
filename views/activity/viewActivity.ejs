@@ -1,0 +1,83 @@
+<header>
+    <a style="left:0; margin-left: 25%" class="top-button" href="/profile">Home</a>
+    <h1><%=activity.name%></h1>
+    <% if(readOnly){%>
+        <a style="right:0; margin-right: 20%" class="top-button" href="/activity/acceptInvite/<%=activity._id%>">Accept Invite</a>
+    <% }else{%>
+        <a style="right:0; margin-right: 20%" class="top-button" href="/search/search/<%=activity._id%>">Find Users</a>
+    <% } %>
+
+</header>
+<main>
+    <div id="activityBody">
+        <table id="activities">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Min Participants</th>
+                    <th>When</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><%= activity.name %></td>
+                    <td><%= activity.location_name %></td>
+                    <td><%= activity.min_participants %></td>
+                    <td><%= activity.activity_date %></td>
+                    <td><%= activity.created_on %></td>
+                </tr>
+            </tbody>
+        </table>
+        <% for(var participant in participants) {%>
+            <% if(participants[participant].creator){ %>
+                <h3>Created By: <%= participants[participant].name %></h3>
+        <% } } %>
+        <% if(participants.length == 0) {%>
+            <h2>No Participants Invited</h2>
+        <% }else{ %>
+        <% for(var participant in participants) {%>
+        <% var user = participants[participant]; %>
+        <h3><%= user.name %></h3>
+        <table id="activities" style="margin-bottom: 10px;">
+            <thead>
+            <% attributeNames.forEach(function(name){ %>
+            <th><%=name%></th>
+            <% }) %>
+            </thead>
+            <tbody>
+            <tr>
+                <% user.attributes.forEach(function(attribute){ %>
+                <td style="width: 20%;"><%= attribute%></td>
+                <% }) %>
+            </tr>
+            </tbody>
+        </table>
+        <% }
+        } %>
+
+    </div>
+</main>
+    <% 
+    let today = new Date();
+    let ejsDate = activity.raw_activity_date;
+    let activityDate = new Date(ejsDate);
+    console.log('coool', JSON.stringify(today, null, '\t'));
+    console.log(activityDate);
+     if(activityDate < today && !readOnly) { %>
+     <aside>
+     <a class="button" href="/activity/review/<%=activity.type%>/<%=activity._id%>">Rate Users</a>
+     </aside>
+     <% } %>
+<aside>
+    <a class="button" href="/profile">Profile</a>
+</aside>
+<footer>
+</footer>
+<script>
+    let date = new Date();
+    console.log(new Date("<%= activity.raw_activity_date %>"));
+    console.log(date);
+    console.log(<%= readOnly %>);
+</script>

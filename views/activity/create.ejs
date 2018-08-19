@@ -1,0 +1,31 @@
+<header>
+    <a style="left:0; margin-left: 25%" class="top-button" href="/user/logout">Logout</a>
+    <h1>New <%=type%> Activity</h1>
+</header>
+<main>
+    <form id="registration-form" action="/activity/create" method="POST">
+        <% if(typeof error !== 'undefined') { %>
+        <h4 style='color:red'><%=error%></h4>
+        <% } %>
+        <input type="hidden" name="activityType" value="<%=type%>">
+        <input type="hidden" name="_csrf" value="<%=csrf%>">
+
+        <input type="text" placeholder="Name" name="name">
+        <input type="number" min="0" placeholder="Minimum Participants" name="minParticipants">
+        <input type="text" id="datepicker" placeholder="When" name="activityDate">
+        <input type="text" placeholder="Where" name="locationName">
+        <input type="text" placeholder="Eircode" name="eircode">
+        <input type="submit" value="Create">
+    </form>
+</main>
+<aside>
+    <a class="button" href="/profile">Profile</a>
+</aside>
+<footer>
+</footer>
+
+<script>
+    $( function() {
+        $( "#datepicker" ).datepicker();
+    } );
+</script>

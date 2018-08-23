@@ -1,3 +1,8 @@
+<%
+if(typeof formFields === 'undefined'){
+    formFields = {name: "", minParticipants: "", activityDate: "", locationName: "", eircode: ""};
+}
+%>
 <header>
     <a style="left:0; margin-left: 25%" class="top-button" href="/user/logout">Logout</a>
     <h1>New <%=type%> Activity</h1>
@@ -10,11 +15,16 @@
         <input type="hidden" name="activityType" value="<%=type%>">
         <input type="hidden" name="_csrf" value="<%=csrf%>">
 
-        <input type="text" placeholder="Name" name="name">
-        <input type="number" min="0" placeholder="Minimum Participants" name="minParticipants">
-        <input type="text" id="datepicker" placeholder="When" name="activityDate">
-        <input type="text" placeholder="Where" name="locationName">
-        <input type="text" placeholder="Eircode" name="eircode">
+        <label for="activityName">Name</label>
+        <input type="text" placeholder="Name" id="activityName" value="<%= formFields.name %>" name="name">
+        <label for="participantNum">Minimum Number of Participants</label>
+        <input type="number" min="0" id="participantNum" placeholder="Minimum Participants" value="<%= formFields.minParticipants %>" name="minParticipants">
+        <label for="datepicker">When</label>
+        <input type="text" id="datepicker" placeholder="When" value="<%= formFields.activityDate %>" name="activityDate">
+        <label for="where">Where</label>
+        <input type="text" placeholder="Where" id="where" value="<%= formFields.locationName %>" name="locationName">
+        <label for="eircode">Eircode</label>
+        <input type="text" placeholder="Eircode" id="eircode" value="<%= formFields.eircode %>" name="eircode">
         <input type="submit" value="Create">
     </form>
 </main>

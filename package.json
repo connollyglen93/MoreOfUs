@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "test": "ava \"**/*.test.js\" --verbose",
-    "wartch:test": "npm t -- --watch"
+    "watch:test": "npm t -- --watch"
   },
   "dependencies": {
     "bcrypt": "^1.0.3",
@@ -26,10 +26,10 @@
     "portfinder": "github:indexzero/node-portfinder",
     "serve-favicon": "~2.4.5",
     "uniqid": "^4.1.1",
+    "nodemon": "^1.18.3",
     "ws": "^5.1.0"
   },
   "devDependencies": {
-    "ava": "^0.25.0",
-    "nodemon": "^1.18.3"
+    "ava": "^0.25.0"
   }
 }

@@ -1,3 +1,6 @@
+<% if(typeof formFields === 'undefined'){
+    formFields = {username: "", password1: "", dob: "", password2: ""};
+} %>
 <header>
     <a style="left:0; margin-left: 25%" class="top-button" href="/">Activities</a>
     <h1><%=activityType%></h1>
@@ -12,10 +15,10 @@
         <input type="hidden" name="activityType" value="<%=activityType%>">
         <input type="hidden" name="_csrf" value="<%=csrf%>">
 
-        <input type="text" placeholder="Username" name="username">
-        <input type="text" id="datepicker" id="dob" placeholder="Date of Birth" name="dob">
-        <input type="password" placeholder="Password" name="password1">
-        <input type="password" placeholder="Confirm Password" name="password2">
+        <input type="text" placeholder="Username" value="<%= formFields.username %>" name="username">
+        <input type="text" id="datepicker" id="dob" value="<%= formFields.dob %>" placeholder="Date of Birth" name="dob">
+        <input type="password" placeholder="Password" value="<%= formFields.password1 %>" name="password1">
+        <input type="password" placeholder="Confirm Password" value="<%= formFields.password2 %>" name="password2">
         <input type="submit" value="Register">
     </form>
 </main>

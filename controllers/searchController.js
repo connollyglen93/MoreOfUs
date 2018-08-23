@@ -6,7 +6,7 @@ let calculator = require('../models/attribute/calculator');
 
 let attributeConstants = require('../var/attributeConstants.json');
 
-var numberOfUsersReturned = 4; //change this to change the number of users returned 
+var numberOfUsersReturned = 12; //change this to change the number of users returned 
 
 exports.begin = function(req, res) {
     sesh = req.session;
@@ -81,6 +81,7 @@ exports.begin = function(req, res) {
                             let actUserIdFound = ids[1].trim();
                             users.forEach(function (fullUser) {
                                 if(fullUser.actUser._id.equals(actUserIdFound)){
+                                    console.log(fullUser);
                                     similarUsers.push({
                                         id: fullUser.actUser._id,
                                         userId: fullUser.actUser.userId,

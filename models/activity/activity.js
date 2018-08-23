@@ -84,7 +84,7 @@ var ActivitySchema = new Schema(
             _callback(false, false);
         }
     }
-/*     Array.prototype.remove = function() {
+/*      Array.prototype.remove = function() {
         var what, a = arguments, L = a.length, ax;
         while (L && this.length) {
             what = a[--L];
@@ -93,7 +93,7 @@ var ActivitySchema = new Schema(
             }
         }
         return this;
-    }; //create ability to remove attribIndex from attribIndexes by value */
+    }; //create ability to remove attribIndex from attribIndexes by value  */
 
     ActivitySchema.methods.checkForUserRating = function(userRating, userRated, _callback){
         let self = this;
@@ -112,14 +112,17 @@ var ActivitySchema = new Schema(
             }
 
             let userHasRated = self.ratings.filter(rating => rating.participantId.equals(userRating));
-            if(!userHasRated.length){ //if user hasn't rated a user
-                _callback(false, false, attribIndexes);
+            console.log()
+            if(!userHasRated.length || userHasRated.length === 0){ //if user hasn't rated a user
+                return _callback(false, false, attribIndexes);
             }else{ //if user has rated a user
                 userHasRated = userHasRated[0];
                 let userHasRatedUser = userHasRated.ratedUsers.filter(ratedUser => ratedUser.id.equals(userRated));
-                if(!userHasRatedUser.length){ //if user hasn't rated this user
-                    _callback(false, false, attribIndexes);
+                console.log(userHasRatedUser.length);
+                if(!userHasRatedUser.length || userHasRatedUser.length === 0){ //if user hasn't rated this user
+                    return _callback(false, false, attribIndexes);
                 } //if user has rated this user
+                console.log(userHasRatedUser);
                 userHasRatedUser = userHasRatedUser[0];
                 userHasRatedUser.attribIndexes.forEach(function(attribIndexRated){
                     remove(attribIndexes, attribIndexRated);

@@ -8,6 +8,7 @@ var Calculator = function (comparatorLocation) {
     }
     this.halfRating = 2.5*1.0;
     this.fullRating = 5;
+    this.vectorLength = 0;
 };
 
 Calculator.prototype.calcComparator = function(){
@@ -98,6 +99,18 @@ function compareVectors(a, b, selection){
         let equal = 0;
         let lower = 0;
         let compare = 0;
+        
+        if(a.length < this.vectorLength){
+            for(let i = (a.length - 1); i < this.vectorLength; i++){
+                a[i] = 0;
+            }
+        }
+        if(b.length < this.vectorLength){
+            for(let i = (b.length - 1); i < this.vectorLength; i++){
+                b[i] = 0;
+            }
+        }
+
         if(selection.length > 0 && selection && selection !== "undefined"){
           for(let i = 0; i < selection.length; i++){
               compare += (a[selection[i]] - b[selection[i]]);
@@ -136,6 +149,15 @@ function quickSortKeys(keys, vectors, selection) {
 
 function quickSortVectors(vectors, selection){
     let keys = Object.keys(vectors);
+    for(let key in vectors){
+        if(vectors[key].length !== 0){
+            this.vectorLength = vectors[key].length; //set vector length to be used in the event of two vectors being empty
+            break;
+        }
+    }
+    if(this.vectorLength === 0){
+        return vectors;
+    }
     console.log("Original Keys");
     console.log(keys);
     let sortedKeys = quickSortKeys(keys, vectors, selection);
@@ -282,8 +304,12 @@ Calculator.prototype.generateUpdatedAttributeValue = function(ratingObj, callbac
     ratingObj.values.forEach(function(rating){
         //ratings range between 0 and 5
         // 5 == 1 and 0 == -1
-        rating = rating - self.halfRating; // value between -2.5 and 2.5
-        rating = rating/self.halfRating ; //floating point between -1 and 1
+        if(rating !== self.halfRating){
+            rating = rating - self.halfRating; // value between -2.5 and 2.5
+            rating = rating/self.halfRating ; //floating point between -1 and 1
+        }else{
+            rating = 0.1; //prevent no rating from occuring on selection on 2.5(halfRating) rating 
+        }
         totalRating += rating;
     });
     if(totalRating < 0){ //total rating cannot be less than 0
@@ -407,10 +433,20 @@ function quicksortRepresentatives(repObjs){
 function convertToRepresentatives(keys, vectors, comparator, selection){
     let newVectors = [];
     for(let i = 0; i < keys.length; i++){
-        let representative = compareVectors(vectors[keys[i]], comparator, selection);
+    //    let representative = compareVectors(vectors[keys[i]], comparator, selection);
+        let representative = convertToAverage(vectors[keys[i]]);
         newVectors.push({key : keys[i], attributes :vectors[keys[i]], representative: representative });
     }
     return newVectors;
+}
+
+function convertToAverage(vector){
+    let total = 0;
+    for(let i = 0; i < vector.length; i++){
+        total += vector[i];
+    }
+    let average = total / vector.length;
+    return average;
 }
 
 

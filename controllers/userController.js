@@ -29,57 +29,94 @@ exports.completeRegistration = function(req, res) {
         } else {
             typeObj = typeFound;
         }
+        var format = /[ !@#$%^&*()_+\-=\[\]{};':"\\|,<>\/?]/;
 
         var username = req.body.username;
         var error = false;
         if (username.length < 5) {
             error = 'Username must be longer than 5 characters';
         }
-        var password = req.body.password1;
-        var password2 = req.body.password2;
-        if (password !== password2) {
-            error = 'Passwords do not match';
-        }
-        var dob = moment(req.body.dob);
-        if (dob.isValid()) {
-            dob = dob.format('YYYY-MM-DD');
-        } else {
-            error = 'Invalid date format provided';
+
+        if(format.test(username)){
+            error = "Invalid Username entered";
         }
 
-        if (error === false) {
-            user.find({username: username}, 'username', function (err, users) {
-                if (err) {
-                    //error handling
-                }
-                if (users.length === 0) {
-                    user.create({username: username, password: password, date_of_birth: dob}, function (err, userObj) {
-                        if (err) {
-                            res.render('register', {test: dob, activityType: type, error: err, csrf : req.csrfToken()});
-                            return;
-                        } else {
-                            activityUser.create({userId: userObj._id, typeId: typeObj._id}, function (err, actUser) {
-                                if (err) {
-                                    console.log(err);
-                                }
-                                sesh = req.session;
-                                sesh.login = username;
-                                sesh.actType = type;
-                                res.redirect('/profile');
+        var password = req.body.password1;
+        var password2 = req.body.password2;
+
+        passwordContainsError(password, function(passwordError){
+            if(passwordError){
+                error = passwordError;
+            }
+
+            if (password !== password2) {
+                error = 'Passwords do not match';
+            }
+            if(req.body.dob.length > 10){
+                error = 'Invalid date format provided';
+            }
+            var dob = moment(req.body.dob);
+            if (dob.isValid()) {
+                dob = dob.format('YYYY-MM-DD');
+            } else {
+                error = 'Invalid date format provided';
+            }
+
+            if (error === false) {
+                user.find({username: username}, 'username', function (err, users) {
+                    if (err) {
+                        //error handling
+                    }
+                    if (users.length === 0) {
+                        user.create({username: username, password: password, date_of_birth: dob}, function (err, userObj) {
+                            if (err) {
+                                res.render('register', {test: dob, activityType: type, error: err,formFields : req.body, csrf : req.csrfToken()});
                                 return;
-                            });
-                        }
-                    });
-                } else {
-                    res.render('register', {test: dob, activityType: type, error: 'That username is already taken', csrf : req.csrfToken()});
-                    return;
-                }
-            });
-        } else {
-            res.render('register', {test: dob, activityType: type, error: error, csrf : req.csrfToken()});
-        }
+                            } else {
+                                activityUser.create({userId: userObj._id, typeId: typeObj._id}, function (err, actUser) {
+                                    if (err) {
+                                        console.log(err);
+                                    }
+                                    sesh = req.session;
+                                    sesh.login = username;
+                                    sesh.actType = type;
+                                    res.redirect('/profile');
+                                    return;
+                                });
+                            }
+                        });
+                    } else {
+                        res.render('register', {test: dob, activityType: type,formFields : req.body, error: 'That username is already taken', csrf : req.csrfToken()});
+                        return;
+                    }
+                });
+            } else {
+                res.render('register', {test: dob, activityType: type,formFields : req.body, error: error, csrf : req.csrfToken()});
+            }
+        });
+
     });
 };
+
+function passwordContainsError(pw, _callback) {
+    if(!/[A-Z]/.test(pw)){
+        return _callback("Password must contain an Uppercase Letter");
+    }
+    if(!/[a-z]/.test(pw)){
+        return _callback("Password must contain a Lowercase Letter");
+    }
+    if(!/[0-9]/.test(pw)){
+        return _callback("Password must contain a number");
+    }
+    if(!/[^A-Za-z0-9]/.test(pw)){
+        return _callback("Password must contain a a special character");
+    }
+    if(pw.length <= 5){
+        return _callback("Password must be at least 5 characters long");
+    }
+    return _callback(false);
+
+}
 
 exports.loginInit = function(req, res){
     sesh = req.session;

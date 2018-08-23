@@ -21,7 +21,7 @@
 <div class="navbar">
     <ul>
         <li><a class="navButtons" href="/profile">Home</a></li>
-        <li><a class="navButtons">Notifications</a>
+        <li><a class="navButtons" id="notification">Notifications</a>
             <ul id="notificationsList">
             </ul>
 
@@ -79,6 +79,7 @@
        dataType: 'json',
        success: function(data){
            console.log(data);
+           data = JSON.parse(data);
            if(data.result){
                if(data.result !== undefined && data.result){
                    $('#notificationsList').empty();
@@ -86,6 +87,12 @@
                        data.notifications.forEach(function(notification){
                            $('#notificationsList').append('<li><a href=\'/activity/view/'+data.type+'/'+notification.activity+'\'>' + notification.content  + '</a></li>')
                        })
+                       let number = document.createElement('span');
+                       number.innerHTML = data.notifications.length;
+                       number.style.color = 'red';
+                       number.style.marginLeft = '5px';
+                       $('#notification').append(number);
+
                    }else{
                        $('#notificationsList').append('<li>No Notifications</li>')
                    }

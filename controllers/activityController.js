@@ -35,31 +35,38 @@ exports.createActivity = function(req, res){
     var name = req.body.name;
     var typeName = req.body.activityType;
     var numParticipants = req.body.minParticipants;
-    var timeOfActivity = moment(req.body.activityDate).format();
+    var timeOfActivity = moment(req.body.activityDate);
     var location = req.body.locationName;
     var eircode = req.body.eircode;
 
     var error = false;
 
-/*    if(!name.match('[^A-Za-z0-9]')){
-        error = 'Invalid name entered';
+    var format = /[!@#$%^&*()_+\-=\[\]{};':"\\|,<>\/?]/;
+
+
+    if(format.test(name)){
+        error = "Invalid Activity name entered";
     }
-    if(!location.match('[^A-Za-z0-9]')){
-        error = 'Invalid name entered';
+    if(format.test(location)){
+        error = "Invalid Where entered";
     }
-    if(!eircode.match('[^A-Za-z0-9]')){
-        error = 'Invalid name entered';
+    if(!/[0-9]/.test(eircode)){
+        error = "Eircode must contain a number";
     }
     if(numParticipants < 2){
-        error = 'Must select at least 2 participants';
+        error = 'Activity must require at least 2 participants';
     }
-    if(!timeOfActivity.isValid()){
+    if(!timeOfActivity.isValid() || req.body.activityDate.length > 10){
         error = 'Please select a valid date and time for the activity';
-    }*/
+    }
+    if(timeOfActivity < moment()){
+        error = 'Activity date must be set in the future'; 
+    }
 
+    timeOfActivity = timeOfActivity.format();
     activityType.findOne({name: typeName}).exec(function(err, typeFound){
         if(err){
-          //  return handleError(err);
+          throw err;
         }
 
         if(!typeFound){
@@ -67,7 +74,7 @@ exports.createActivity = function(req, res){
         }
 
         if(error){
-            return res.render('activity/create', {type: typeName,error: error, csrf : req.csrfToken()});
+            return res.render('activity/create', {type: typeName,error: error,formFields: req.body, csrf : req.csrfToken()});
         }
 
 
@@ -120,6 +127,8 @@ exports.viewActivity = function(req, res){
             var creatorId = actObj.created_by;
 
             let running = false;
+            console.log("Check:" + userId);
+            console.log("To see if it is participating in: " + actObj.participants);
             actObj.checkForParticipant(userId, function(exists){
                 if(!exists && !userId.equals(creatorId)){
                     actUser.notifications.forEach(function(notification){
@@ -183,7 +192,6 @@ exports.rateUsers = function(req, res){
                     };
                     let done = [];
                     let allUsersRated = [];
-                    console.log(participants);
                     for(let actUserId in participants){
                         let participant = participants[actUserId];
                         activity.checkForRating(actObj._id, actUser._id, actUserId, function(err, hasRated, indexesRated){

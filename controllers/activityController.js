@@ -108,6 +108,11 @@ exports.viewActivity = function(req, res){
     var typeName = req.params.type;
     var activityId = req.params.id;
 
+    var guest = req.query.guest;
+    if(typeof guest === 'undefined'){
+        guest = false;
+    }
+
     activity.findById(activityId, function(err, actObj){
         if(err){
             throw err;
@@ -126,35 +131,45 @@ exports.viewActivity = function(req, res){
             var userId = actUser._id;
             var creatorId = actObj.created_by;
 
-            let running = false;
-            console.log("Check:" + userId);
-            console.log("To see if it is participating in: " + actObj.participants);
-            actObj.checkForParticipant(userId, function(exists){
-                if(!exists && !userId.equals(creatorId)){
-                    actUser.notifications.forEach(function(notification){
-                       if(notification.activity.equals(activityId)){
-                           running = true;
-                           actObj.generateActivityObj(sesh.actType, actUser, true, function(viewObj){
-                               return res.render('activity/viewActivity', viewObj);
-                           });
-                       }else{
-                           console.log(notification.activity + "!==" +activityId);
-                       }
-                    });
-                    if(!running) {
-                        return res.redirect('/profile');
-                    }
-                }
-                actObj.generateActivityObj(sesh.actType,actUser, false, function(viewObj){
+            if(guest){
+                actObj.generateActivityObj(sesh.actType, actUser, true, function(viewObj){
                     return res.render('activity/viewActivity', viewObj);
                 });
-            });
+            }else{
+
+                let running = false;
+                console.log("Check:" + userId);
+                console.log("To see if it is participating in: " + actObj.participants);
+                actObj.checkForParticipant(userId, function(exists){
+                    console.log(exists);
+                    if(!exists && !userId.equals(creatorId)){
+                        actUser.notifications.forEach(function(notification){
+                        if(notification.activity.equals(activityId)){
+                            running = true;
+                            actObj.generateActivityObj(sesh.actType, actUser, true, function(viewObj){
+                                return res.render('activity/viewActivity', viewObj);
+                            });
+                        }else{
+                            console.log(notification.activity + "!==" +activityId);
+                        }
+                        });
+                        if(!running) {
+                            return res.redirect('/profile');
+                        }
+                    }else{
+                        actObj.generateActivityObj(sesh.actType,actUser, false, function(viewObj){
+                            return res.render('activity/viewActivity', viewObj);
+                        });
+                    }
+                });
+            }
         });
     })
 };
 
 exports.rateUsers = function(req, res){
     sesh = req.session;
+    console.log(sesh);
     var id = req.params.id;
     var type = req.params.type;
     activity.getById(id, function(err, actObj){
@@ -297,7 +312,7 @@ exports.submitRating = function(req, res){
                             console.log(err);
                             throw err;
                         }
-                        return res.json({msg:'User Rated'});
+                        return res.json({msg:'User Attribute Rated'});
                     });
                 });
             break;
@@ -329,6 +344,11 @@ exports.submitRating = function(req, res){
                         throw err;
                     }
                     actObj.getParticipants(function(participants){
+                        for(let id in participants){
+                            if(ratingUserId.equals(id)){
+                                delete participants[id];
+                            };
+                        }
                         let actUserIds = Object.keys(participants);
                         let actUserIdsLength = actUserIds.length - 1;
                         let done = [];
@@ -338,21 +358,16 @@ exports.submitRating = function(req, res){
                                 ratingObj.rateUser(actUserId, rating, function(err, updatedActUser){
                                     if(err){
                                         errors.push(err);
-                                    }else{
-                                        activity.recordRating(actId, ratingUserId, actUserId, function(err, updatedAct){
-                                            if(err){
-                                                console.log(err);
-                                                throw err;
-                                            }
-                                            done.push(actUserId + " done");
-                                        });
                                     }
+                                    done.push(actUserId + " done");
                                 });
+                            }else{
+                                done.push(actUserId + " done");
                             }
                         })
                         let waitForAsync;
                         (waitForAsync = function(){
-                            if(done.length != actUserIdsLength){
+                            if(done.length != actUserIds.length){
                                 setTimeout(function(){
                                     waitForAsync();
                                 }, 1000)
@@ -360,7 +375,13 @@ exports.submitRating = function(req, res){
                                 console.log(errors[0]);
                                 throw errors[0];
                             }else{
-                                return res.json({msg:'Users Rated'});
+                                activity.recordMultipleRatings(actId, ratingUserId, actUserIds, function(err, updatedAct){
+                                    if(err){
+                                        console.log(err);
+                                        throw err;
+                                    }
+                                    return res.json({msg:'Users Rated'});
+                                });
                             }
                         })();
                     });

@@ -85,7 +85,7 @@
                    $('#notificationsList').empty();
                    if(data.notifications.length > 0){
                        data.notifications.forEach(function(notification){
-                           $('#notificationsList').append('<li><a href=\'/activity/view/'+data.type+'/'+notification.activity+'\'>' + notification.content  + '</a></li>')
+                           $('#notificationsList').append('<li><a href=\'/activity/view/'+data.type+'/'+notification.activity+'?guest=true\'>' + notification.content  + '</a></li>')
                        })
                        let number = document.createElement('span');
                        number.innerHTML = data.notifications.length;

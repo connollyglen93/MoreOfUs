@@ -53,6 +53,8 @@ var ActivitySchema = new Schema(
             if(err){
                 _callback(err, act);
             }
+            console.log("Params");
+            console.log(params);
             if(params.length){
                 let attribIndex = params.shift();
                 console.log('Attribute Check');
@@ -67,13 +69,13 @@ var ActivitySchema = new Schema(
     ActivitySchema.methods.checkForAttribRating = function(userRating, userRated, attribIndex, _callback){
         self = this;
         let userHasRated = self.ratings.filter(rating => rating.participantId.equals(userRating));
-        if(!userHasRated.length){ //if user hasn't rated a user
-            _callback(false, false);
+        if(userHasRated.length === 0 || typeof userHasRated === 'undefined'){ //if user hasn't rated a user
+            return _callback(false, false);
         }else{ //if user has rated a user
             userHasRated = userHasRated[0];
             let userHasRatedUser = userHasRated.ratedUsers.filter(ratedUser => ratedUser.id.equals(userRated));
-            if(!userHasRatedUser.length){ //if user hasn't rated this user
-                _callback(false, false);
+            if(userHasRatedUser.length === 0 ||  typeof userHasRatedUser === 'undefined'){ //if user hasn't rated this user
+                return _callback(false, false);
             } //if user has rated this user
             userHasRatedUser = userHasRatedUser[0];
             userHasRatedUser.attribIndexes.forEach(function(attribIndexRated){
@@ -112,7 +114,6 @@ var ActivitySchema = new Schema(
             }
 
             let userHasRated = self.ratings.filter(rating => rating.participantId.equals(userRating));
-            console.log()
             if(!userHasRated.length || userHasRated.length === 0){ //if user hasn't rated a user
                 return _callback(false, false, attribIndexes);
             }else{ //if user has rated a user
@@ -138,7 +139,7 @@ var ActivitySchema = new Schema(
         /* params =  userRating, userRated, [attribId] */
         let userRating = params.shift();
         let userRated = params.shift();
-        console.log('Yo we recording ratings now!');
+        console.log('recording ratings now!');
         this.getById(id, function(err, act){
             if(err){
                 _callback(err, act);
@@ -153,6 +154,132 @@ var ActivitySchema = new Schema(
             }
         })
     }
+
+    ActivitySchema.statics.recordMultipleRatings = function(...params){
+        let _callback = params.pop();
+        let id = params.shift();
+        /* params =  userRating, userRated, [attribId] */
+        let userRating = params.shift();
+        let usersRated = params.shift();
+        console.log('recording ratings now!');
+        this.getById(id, function(err, act){
+            if(err){
+                _callback(err, act);
+            }
+            let allRatings = [];
+            usersRated.forEach(function(userRated){
+                console.log('Multiple User Recording');
+                act.markUserRatingWithoutSave(userRating, userRated, function(err, newUserRatings){
+                    allRatings.push(newUserRatings);
+                });
+            });
+            let waitForAsync;
+                        (waitForAsync = function(){
+                            if(allRatings.length != usersRated.length){
+                                setTimeout(function(){
+                                    waitForAsync();
+                                }, 1000)
+                            }else{
+
+                                let allRatedUsers = [];
+                                let newAllRatings = [];
+                                let participantIdTemp = 0;
+                                allRatings.forEach(function(returnedRating){
+                                    allRatedUsers.push(returnedRating.ratedUsers);
+                                    participantIdTemp = returnedRating.participantId;
+                                });
+                                newAllRatings.push({participantId: participantIdTemp, ratedUsers: allRatedUsers});
+                                allRatings = newAllRatings;
+                                
+                                let newRatings = [];
+                                if(act.ratings.length){
+                                    let ratingExists = false;
+                                    allRatings.forEach(function(returnedRating){
+                                        act.ratings.forEach(function(rating){
+                                            if(rating.participantId.equals(returnedRating.participantId)){ 
+                                                rating = returnedRating;
+                                                ratingExists = true;
+                                            }
+                                        });
+                                        if(!ratingExists && newRatings.indexOf(returnedRating) === -1){
+                                            newRatings.push(returnedRating)
+                                        }
+                                    })
+                                    act.ratings.forEach(function(rating){
+                                        newRatings.push(rating);
+                                    });
+                                    act.ratings = newRatings;
+                                }else{
+                                    act.ratings = allRatings;
+                                }
+                                console.log({act : act, actRatings: act.ratings});
+                                act.save(function(err, updatedActivity){
+                                    _callback(err, updatedActivity);
+                                })
+                            }
+                        })();
+        })
+    }
+
+    ActivitySchema.methods.markAttributeRatingWithoutSave = function(userRating, userRated, attribIndex, _callback){
+        console.log('Attribute Recording Woop');
+        self = this;
+        console.log(self);
+        let userHasRated = self.ratings.filter(rating => rating.participantId.equals(userRating));
+        if(!userHasRated.length){ //if user hasn't rated a user
+            userHasRated = {participantId : userRating, ratedUsers : [{id: userRated, attribIndexes: [attribIndex]}]};
+        }else{ //if user has rated a user
+            userHasRated = userHasRated[0];
+            let userHasRatedUser = userHasRated.ratedUsers.filter(ratedUser => ratedUser.id.equals(userRated));
+            if(!userHasRatedUser.length){ //if user hasn't rated this user
+                userHasRatedUser = {id : userRated, attribIndexes : [attribIndex]};
+                userHasRated.ratedUsers.push(userHasRatedUser);
+            }else{ //if user has rated this user
+                userHasRatedUser = userHasRatedUser[0];
+                userHasRatedUser.attribIndexes.push(attribIndex);
+            }
+        }
+
+        return _callback(err, userHasRated);
+
+    }
+
+    ActivitySchema.methods.markUserRatingWithoutSave = function(userRating, userRated, _callback){
+        console.log('User Recording Woop');
+        let self = this;
+        activityType.findOne({_id : self.type}).exec(function(err, type){
+            if(err){
+                _callback(err, false);
+            }
+
+            let attribCount = type.attribute_names.length;
+            let attribIndexes = [];
+            for(let i = 0; i < attribCount; i++){
+                attribIndexes.push(i);
+            }
+            let userHasRated = self.ratings.filter(rating => rating.participantId.equals(userRating));
+            if(!userHasRated.length){ //if user hasn't rated a user
+                let nestedNestedRating = {id:userRated, attribIndexes: attribIndexes};
+                let nestedRatedUsers = [];
+                nestedRatedUsers.push(nestedNestedRating);
+                console.log({nestedRatedUsers: nestedRatedUsers});
+                userHasRated = {participantId : userRating, ratedUsers : nestedRatedUsers};
+            }else{ //if user has rated a user
+                userHasRated = userHasRated[0];
+                let userHasRatedUser = userHasRated.ratedUsers.filter(ratedUser => ratedUser.id.equals(userRated));
+                if(!userHasRatedUser.length){ //if user hasn't rated this user
+                    userHasRatedUser = {id : userRated, attribIndexes : attribIndexes};
+                    userHasRated.ratedUsers.push(userHasRatedUser);
+                }else{ //if user has rated this user
+                    userHasRatedUser = userHasRatedUser[0];
+                    userHasRatedUser.attribIndexes = attribIndexes;
+                }
+            }
+  
+            return _callback(err, userHasRated);
+        });
+    }
+
 
     ActivitySchema.methods.markAttributeRating = function(userRating, userRated, attribIndex, _callback){
         console.log('Attribute Recording Woop');
@@ -175,17 +302,23 @@ var ActivitySchema = new Schema(
 
         let newRatings = [];
         if(self.ratings.length){
+            let ratingExists = false;
             self.ratings.forEach(function(rating){
-                if(rating.participantId.equals(userRating)){
-                    rating = userHasRated;
+                 if(!rating.participantId.equals(userRating)){ 
+                    newRatings.push(rating);
+                }else{ //if user has already rated a user
+                    newRatings.push(userHasRated);
+                    ratingExists = true;
                 }
-                newRatings.push(rating);
             })
+            if(!ratingExists){
+                newRatings.push(userHasRated)
+            }
             self.ratings = newRatings;
         }else{
             self.ratings.push(userHasRated);
         }
-        console.log(self);
+
         self.save(function(err, updatedActivity){
             _callback(err, updatedActivity);
         })
@@ -223,21 +356,29 @@ var ActivitySchema = new Schema(
                     userHasRatedUser.attribIndexes = attribIndexes;
                 }
             }
-
+  
             let newRatings = [];
-            if(self.ratings.length){
+            if(self.ratings.length > 0){
+                let ratingExists = false;
                 self.ratings.forEach(function(rating){
-                    if(rating.participantId.equals(userRating)){
-                        rating = userHasRated;
+                     if(!rating.participantId.equals(userRating)){ 
+                        newRatings.push(rating);
+                    }else{ //if user has already rated a user
+                        newRatings.push(userHasRated);
+                        ratingExists = true;
                     }
-                    newRatings.push(rating);
                 })
+                if(!ratingExists){
+                    newRatings.push(userHasRated)
+                }
                 self.ratings = newRatings;
             }else{
                 self.ratings.push(userHasRated);
             }
             console.log('Time to save');
             console.log({actToSave: self});
+            console.log('Ratings to save');
+            console.log({ratingsToSave: self.ratings});
             self.save(function(err, updatedActivity){
                 _callback(err, updatedActivity);
             })

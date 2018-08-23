@@ -276,14 +276,25 @@ Calculator.prototype.findNotParticipating = function(...parameters){
         let userIdFound = ids[0].trim();
         let actUserIdFound = ids[1].trim();
         console.log(sortedVectorKey + " - " + userIdFound + " - " + currentVector.value);
-        participants.filter(function(participant){
+/*         participants.filter(function(participant){
             return participant.equals(actUserIdFound);
-        });
+        }); */
+        participants.forEach(function(participant){
+            if(participant.equals(actUserIdFound)){
+                delete sortedVectors[sortedVectorKey];
+            }
+        })
+/*         for(let i in participants){
+            if(participants[i].equals(actUserIdFound)){
+                delete sortedVectors[sortedVectorKey];
+            }
+        } */
         if (currentUser.userId.equals(userIdFound)) {
             index = sortedVectorKey;
             console.log(sortedVectors[index]);
             delete sortedVectors[sortedVectorKey];
         }
+        
     }
     console.log("Index");
     console.log(index);
@@ -298,7 +309,7 @@ Calculator.prototype.findNotParticipating = function(...parameters){
 
 Calculator.prototype.generateUpdatedAttributeValue = function(ratingObj, callback){
     let totalRating = 0;
-    self = this;
+    let self = this;
     console.log({Attr_Index: ratingObj.attrIndex});
     console.log({Rating_Values: ratingObj.values});
     ratingObj.values.forEach(function(rating){

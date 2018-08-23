@@ -4,7 +4,6 @@ var activity = require('../activity/activity');
 var user = require('../users/user');
 var ratingObj = require('../users/ratings');
 var moment = require('moment');
-const bcrypt = require('bcrypt');
 let notification = require('../interactions/notifications');
 var attributeConstants = require('../../var/attributeConstants.json');
 let calculator = require('../attribute/calculator');
@@ -51,15 +50,20 @@ ActivityUserSchema.methods.validateAttributeValueCount = function(_callback){
     self = this;
     activityType.findOne({_id: self.typeId}).exec(function(err, actType){
         if(err){
-            console.log(err.message);
+            console.log(err);
         }
-        if(actType.attribute_names.length === self.attributeValues.length){
-            return _callback();
-        }else if(actType.attribute_names.length > self.attributeValues.length){
-            for(var i = self.attributeValues.length; i < actType.attribute_names.length; i++){
-                self.attributeValues[i] = Math.floor((Math.random() * 100));
+        if(typeof self.attributeValues == 'undefined' || actType.attribute_names.length > self.attributeValues.length){
+            if(typeof self.attributeValues == 'undefined' ){
+                self.attributeValues = [];
             }
+            for(var i = self.attributeValues.length; i < actType.attribute_names.length; i++){
+                self.attributeValues[i] = 0;
+            }
+            console.log(self);
             self.save();
+        }
+        else if(actType.attribute_names.length === self.attributeValues.length){
+            return _callback();
         }else{
             var attributeValue = [];
             for(var l = 0; l < actType.attribute_names.length; l++){
@@ -189,43 +193,47 @@ ActivityUserSchema.methods.updateAttributes = function(_callback){
     let newAttributes = {};
     let errors = [];
     let done = [];
-    for(let i = 0; i < self.attributeValues.length; i++){
-        ratingObj.findOne({actUserId: self._id, attrIndex: i}).exec(function(err, ratingObj){
-            if(err){
-                errors.push(err);
-            }
-            if(ratingObj){
-                calculator.generateUpdatedAttributeValue(ratingObj, function(err, updatedAttributeValue){
-                    newAttributes[i] = Number(updatedAttributeValue);
-                });
-            }else{
-                newAttributes[i] = self.attributeValues[i];
-            }
-            done.push(i + " done");
-        })
-    }
-    let waitForAsync;
-    (waitForAsync = function(){
-        if(self.attributeValues.length != Object.keys(newAttributes).length){
-            setTimeout(function(){
-                waitForAsync();
-            }, 1000)
-        }else if(errors.length){
-            _callback(errors[0], false);
-        }else{
-            let simplifiedArray = [];
-            console.log({ogAttributes: self.attributeValues, newAttributes: newAttributes});
-            for(let key in newAttributes){
-                simplifiedArray.push(Math.round(Number(newAttributes[key])));
-            }
-            newAttributes = simplifiedArray;
-            console.log({ogAttributes: self.attributeValues, newAttributes: newAttributes});
-            self.attributeValues = newAttributes;
-            self.save(function(err, newActUser){
-                _callback(err, newActUser);
-            })        
+    self.validateAttributeValueCount(function(err){    
+        console.log("UPDATING ATTRIBUTES");
+        for(let i = 0; i < self.attributeValues.length; i++){
+            ratingObj.findOne({actUserId: self._id, attrIndex: i}).exec(function(err, ratingObj){
+                if(err){
+                    errors.push(err);
+                }
+                if(ratingObj){
+                    calculator.generateUpdatedAttributeValue(ratingObj, function(err, updatedAttributeValue){
+                        newAttributes[i] = Number(updatedAttributeValue);
+                    });
+                }else{
+                    newAttributes[i] = self.attributeValues[i];
+                }
+                done.push(i + " done");
+            })
         }
-    })();
+        let waitForAsync;
+        (waitForAsync = function(){
+            if(self.attributeValues.length != Object.keys(newAttributes).length){
+                setTimeout(function(){
+                    waitForAsync();
+                }, 1000)
+            }else if(errors.length){
+                _callback(errors[0], false);
+            }else{
+                let simplifiedArray = [];
+                console.log({ogAttributes: self.attributeValues, newAttributes: newAttributes});
+                for(let key in newAttributes){
+                    simplifiedArray.push(Math.round(Number(newAttributes[key])));
+                }
+                newAttributes = simplifiedArray;
+                console.log({ogAttributes: self.attributeValues, newAttributes: newAttributes});
+                self.attributeValues = newAttributes;
+                self.save(function(err, newActUser){
+                    _callback(err, newActUser);
+                })        
+            }
+        })();
+    })
+
 }
 
 ActivityUserSchema.statics.getRepresentativeAttributeValues = function(ids, _callback){

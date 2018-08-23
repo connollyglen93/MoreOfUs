@@ -99,7 +99,7 @@ div {
                     <h2>Rated!</h2>
                     </div>
                 <% }else{ %>
-                    <input id="rateactivity-<%= activity._id %>" type="text" class="activityRating"  data-min=0 data-max=5 data-step=0.2 data-size="sm"
+                    <input id="rateUser-<%= participant %>" type="text" class="userRating"  data-min=0 data-max=5 data-step=0.2 data-size="sm"
                     title="" >
                 <% } %>
 
@@ -117,11 +117,19 @@ div {
                             </thead>
                             <tbody>
                                 <tr>
+                                <% if(user.attributes.length > 0) { %>
                                 <% user.attributes.forEach(function(value, index){ %>
                                     <td class="attributeValue" id="attribute-value|<%=participant%>|<%=index%>">
                                     <%= value %>
                                     </td>
                                 <% }) %>
+                                <% } else { %>
+                                <%  activityType.attribute_names.forEach(function(attName, index){ %>
+                                    <td class="attributeValue" id="attribute-value|<%=participant%>|<%=index%>">
+                                    0
+                                    </td>
+                                <% }) } %>
+
                                 </tr>
                             </tbody>
                         </table>
@@ -236,7 +244,6 @@ div {
                     let attributeRateHolder = document.getElementById(attributeHolderId);
                     $(attributeRateHolder).empty();
                 });
-
             });
         })
     }

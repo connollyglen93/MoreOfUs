@@ -64,9 +64,10 @@
     let ejsDate = activity.raw_activity_date;
     let activityDate = new Date(ejsDate);
     console.log('coool', JSON.stringify(today, null, '\t'));
-    console.log(activityDate);
-     if(activityDate < today && !readOnly) { %>
-     <aside>
+    console.log(activityDate); %>
+<%#      if(activityDate < today && !readOnly) { %>
+  <%  if(!readOnly) { %>
+      <aside>
      <a class="button" href="/activity/review/<%=activity.type%>/<%=activity._id%>">Rate Users</a>
      </aside>
      <% } %>

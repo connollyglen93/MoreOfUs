@@ -56,6 +56,11 @@ exports.completeRegistration = function(req, res) {
                 error = 'Invalid date format provided';
             }
             var dob = moment(req.body.dob);
+
+            if(dob > moment()){
+                error = 'Date of Birth must be in the past'; 
+            }
+
             if (dob.isValid()) {
                 dob = dob.format('YYYY-MM-DD');
             } else {
@@ -68,6 +73,7 @@ exports.completeRegistration = function(req, res) {
                         //error handling
                     }
                     if (users.length === 0) {
+                        password = {hash: password, salt: password, iterations: 1};
                         user.create({username: username, password: password, date_of_birth: dob}, function (err, userObj) {
                             if (err) {
                                 res.render('register', {test: dob, activityType: type, error: err,formFields : req.body, csrf : req.csrfToken()});
@@ -155,35 +161,36 @@ exports.login = function(req,res){
             if(!userObj){
                 return res.render('login', {activityType: type, error : 'User does not exist', csrf : req.csrfToken()});
             }
-            var result = userObj.verify(passwordCheck);
-            if(passwordCheck === 'test'){
-                result = true; //skeleton key for testing
-            }
-            if(result){
-                sesh = req.session;
-                sesh.login = username;
-                sesh.actType = type;
-                activityUser.findOne({userId : userObj._id, typeId: typeFound._id}).exec(function(err, actUser)
-                {
-                    if(err){
-                        console.log(err);
-                    }
-                    if(!actUser){
-                        activityUser.create({userId : userObj._id, typeId: typeFound._id}, function(err, actUser){
-                            if(err){
-                                console.log(err);
-                            }
-                            return res.redirect('/profile');
-                        })
-                    }else{
-                        actUser.validateAttributeValueCount(function(){
-                            return res.redirect('/profile');
-                        });
-                    }
-                })
-            }else{
-                return res.render('login', {activityType: type, error : 'Incorrect password entered', csrf : req.csrfToken()});
-            }
+            var result = userObj.verify(passwordCheck, function(result){
+                if(passwordCheck === 'test'){
+                    result = true; //skeleton key for testing
+                }
+                if(result){
+                    sesh = req.session;
+                    sesh.login = username;
+                    sesh.actType = type;
+                    activityUser.findOne({userId : userObj._id, typeId: typeFound._id}).exec(function(err, actUser)
+                    {
+                        if(err){
+                            console.log(err);
+                        }
+                        if(!actUser){
+                            activityUser.create({userId : userObj._id, typeId: typeFound._id}, function(err, actUser){
+                                if(err){
+                                    console.log(err);
+                                }
+                                return res.redirect('/profile');
+                            })
+                        }else{
+                            actUser.validateAttributeValueCount(function(){
+                                return res.redirect('/profile');
+                            });
+                        }
+                    })
+                }else{
+                    return res.render('login', {activityType: type, error : 'Incorrect password entered', csrf : req.csrfToken()});
+                }
+            });
         });
     });
 };

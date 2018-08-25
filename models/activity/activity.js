@@ -167,8 +167,8 @@ var ActivitySchema = new Schema(
                 _callback(err, act);
             }
             let allRatings = [];
+            console.log('Multiple User Recording');
             usersRated.forEach(function(userRated){
-                console.log('Multiple User Recording');
                 act.markUserRatingWithoutSave(userRating, userRated, function(err, newUserRatings){
                     allRatings.push(newUserRatings);
                 });
@@ -185,7 +185,9 @@ var ActivitySchema = new Schema(
                                 let newAllRatings = [];
                                 let participantIdTemp = 0;
                                 allRatings.forEach(function(returnedRating){
-                                    allRatedUsers.push(returnedRating.ratedUsers);
+                                    returnedRating.ratedUsers.forEach(function(ratedUser){
+                                        allRatedUsers.push({id: ratedUser.id, attribIndexes: ratedUser.attribIndexes});
+                                    })
                                     participantIdTemp = returnedRating.participantId;
                                 });
                                 newAllRatings.push({participantId: participantIdTemp, ratedUsers: allRatedUsers});

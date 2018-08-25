@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "node ./bin/www",
     "test": "ava \"**/*.test.js\" --verbose",
     "watch:test": "npm t -- --watch"
   },

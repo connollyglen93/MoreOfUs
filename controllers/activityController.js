@@ -275,8 +275,7 @@ exports.rateAttribute = function(req, res){
                     disabled: hasRated,
                     layout: false
                 }); 
-            })
-            
+            });
         });
     });
 }
@@ -321,18 +320,21 @@ exports.submitRating = function(req, res){
                     return res.json({msg:'Insufficient Data'});
                 }
                 console.log("a");
-                ratingObj.rateUser(actUserId, rating ,function(err, updatedActUser){
+                ratingObj.rateUser(actUserId, rating , ratingUserId, actId,function(err, updatedActUser){
                     if(err){
                         console.log(err);
                         throw err;
                     }
-                    activity.recordRating(actId, ratingUserId, actUserId, function(err, updatedAct){
-                        if(err){
-                            console.log(err);
-                            throw err;
-                        }
-                        return res.json({msg:'User Rated'});
-                    })
+                    console.log('hey');
+                    updatedActUser.save(function(err, newUser){
+                        activity.recordRating(actId, ratingUserId, actUserId, function(err, updatedAct){
+                            if(err){
+                                console.log(err);
+                                throw err;
+                            }
+                            return res.json({msg:'User Rated'});
+                        })
+                    });
                 });
             break;
             case 3: 
@@ -353,13 +355,15 @@ exports.submitRating = function(req, res){
                         let actUserIdsLength = actUserIds.length - 1;
                         let done = [];
                         let errors = [];
+                        let newActivityUsers = [];
                         actUserIds.forEach(function(actUserId){
                             if(!ratingUserId.equals(actUserId)){
-                                ratingObj.rateUser(actUserId, rating, function(err, updatedActUser){
+                                ratingObj.rateUser(actUserId, rating, ratingUserId, actId, function(err, updatedActUser){
+                                    done.push(actUserId + " done");
+                                    newActivityUsers.push(updatedActUser);
                                     if(err){
                                         errors.push(err);
                                     }
-                                    done.push(actUserId + " done");
                                 });
                             }else{
                                 done.push(actUserId + " done");
@@ -370,6 +374,8 @@ exports.submitRating = function(req, res){
                             if(done.length != actUserIds.length){
                                 setTimeout(function(){
                                     waitForAsync();
+                                    console.log("Waiting for this?");
+                                    console.log({done: done, actUserIds: actUserIds, size: actUserIds.length, participants: participants, errors: errors});
                                 }, 1000)
                             }else if(errors.length){
                                 console.log(errors[0]);
@@ -380,7 +386,14 @@ exports.submitRating = function(req, res){
                                         console.log(err);
                                         throw err;
                                     }
-                                    return res.json({msg:'Users Rated'});
+                                    for(let i = 0 ; i < newActivityUsers.length; i++){
+                                        newActivityUsers[i].save(function(er, newUser){
+                                            console.log("Activity User saved with new attributes");
+                                            if(i == newActivityUsers.length - 1){
+                                                return res.json({msg:'Users Rated'});
+                                            }
+                                        })
+                                    }
                                 });
                             }
                         })();

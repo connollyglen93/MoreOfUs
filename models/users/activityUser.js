@@ -227,9 +227,10 @@ ActivityUserSchema.methods.updateAttributes = function(_callback){
                 newAttributes = simplifiedArray;
                 console.log({ogAttributes: self.attributeValues, newAttributes: newAttributes});
                 self.attributeValues = newAttributes;
-                self.save(function(err, newActUser){
-                    _callback(err, newActUser);
-                })        
+           //     self.save(function(err, newActUser){
+                  //  return _callback(err, newActUser);
+                    return _callback(err, self);
+            //    })        
             }
         })();
     })

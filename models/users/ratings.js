@@ -15,33 +15,74 @@ var RatingSchema = new Schema(
     RatingSchema.index({ actUserId: 1, attrIndex: 1}, { unique: true });
 
 
-    RatingSchema.statics.rateUser = function(actUserId, rating, callback){
+    RatingSchema.statics.rateUser = function(actUserId, rating,ratingUserId, actId, callback){
         var ratingObj = mongoose.model('Ratings', RatingSchema);
-        console.log("b");
         var activityUser = require('../users/activityUser');
-        activityUser.findOne({_id : actUserId}).exec(function(err, actUser){
+        var activitySchema = require('../activity/activity');
+        var activityTypeSchema = require('../activity/activityType');
+        activitySchema.findOne({_id : actId}).exec(function(err, activity){
             if(err){
                 console.log(err);
-                callback(err, false);
+                return callback(err, false);
             }
-            console.log("c");
-            let ratingIndexes = actUser.attributeValues.length;
-            ratingObj.mapUserAttributeRatings(ratingIndexes, actUserId, function(err, ratingObjs){
+            activityTypeSchema.findOne({_id : activity.type}).exec(function(err, activityType){
                 if(err){
-                    callback(err, false);
+                    console.log(err);
+                    return callback(err, false);
                 }
-                console.log("d");
-                ratingObj.insertRating(ratingObjs, actUserId, rating, function(err, completedRatings){
+                activityUser.findOne({_id : actUserId}).exec(function(err, actUser){
                     if(err){
-                        callback(err, completedRatings);
+                        console.log(err);
+                        return callback(err, false);
                     }
-                    console.log("e");
-                    actUser.updateAttributes(function(err, updatedUser){
-                        callback(err, updatedUser);
+                    let ratingIndexes = [];
+                    if(typeof activity.ratings !== 'undefined' && activity.ratings.length > 0){ //check for already rated attributes
+                        console.log("I");
+                        activity.ratings.forEach(function(rating){
+                            if(typeof rating.participantId !== 'undefined' && rating.participantId.equals(ratingUserId)){
+                                console.log("J");
+                                rating.ratedUsers.forEach(function(ratedUser){
+                                    if(ratedUser.id.equals(actUserId)){
+                                        console.log("K");
+                                        console.log(ratedUser);
+                                        for(let i = 0; i < actUser.attributeValues.length; i++){
+                                            if(ratedUser.attribIndexes.indexOf(i) === -1){ //if an attribute index is not in the activity ratings for the user being rated
+                                                ratingIndexes.push(i);
+                                            }
+                                        }
+                                    }
+                                })
+                            } 
+                        })
+                    }
+                    console.log(ratingIndexes);
+                    if(ratingIndexes.length === 0){ //if we can't define what attributes to rate, rate them all
+                        for(let i = 0; i < activityType.attribute_names.length; i++){
+                            ratingIndexes.push(i);
+                        }
+                    }
+                    ratingObj.mapUserAttributeRatings(ratingIndexes, actUserId, function(err, ratingObjs){
+                        if(err){
+                            return callback(err, false);
+                        }
+                        console.log('A');
+                        console.log({ratingIndexes: ratingIndexes});
+                        ratingObj.insertRating(ratingObjs, actUserId, rating, function(err, completedRatings){
+                            if(err){
+                                return callback(err, completedRatings);
+                            }
+                            console.log('B');
+                            actUser.updateAttributes(function(err, updatedUser){
+                                console.log('C');
+                                console.log(updatedUser);
+                                console.log(err);
+                                return callback(err, updatedUser);
+                            })
+                        })
                     })
                 })
             })
-        })
+        });
     };
 
     RatingSchema.statics.insertRating = function(ratingObjs, actUserId,rating, callback){
@@ -50,6 +91,7 @@ var RatingSchema = new Schema(
         let newRatings = ratingObjs.nonExistent;
         let count = Number(existing.length) + Number(newRatings.length);
         console.log("Count = " + count);
+        console.log({newRatings: newRatings , existing: existing});
         let finalRatings = [];
         let errors = [];
         if(existing.length){
@@ -83,7 +125,7 @@ var RatingSchema = new Schema(
         }  
         let waitForAsync;
         (waitForAsync = function(){
-            console.log("Final ratings count = " + finalRatings.length);
+            console.log({finalRatings: finalRatings, errors: errors});
             if(finalRatings.length !== count){
                 setTimeout(function(){
                     waitForAsync();
@@ -96,33 +138,38 @@ var RatingSchema = new Schema(
         })();
     }
 
-    RatingSchema.statics.mapUserAttributeRatings = function(attributesLength, actUserId, callback){
+    RatingSchema.statics.mapUserAttributeRatings = function(attributes, actUserId, callback){
             var ratingObj = mongoose.model('Ratings', RatingSchema);
             let done = [];
             let errors = [];
             let existingRatingObjs = {existent : [], nonExistent : []};
-            for(let i = 0; i < attributesLength; i++){
-                ratingObj.findOne({actUserId: actUserId, attrIndex : i}).exec(function(err, existingRatings){
+            for(let i = 0; i < attributes.length; i++){
+                let j = attributes[i];
+                console.log("Ratings Search");
+                console.log({actUserId: actUserId, attrIndex : j});
+                ratingObj.findOne({actUserId: actUserId, attrIndex : j}).exec(function(err, existingRatings){
                     if(err){
                         errors.push(err);
                     }else{
                         if(existingRatings && typeof existingRatings != undefined && typeof existingRatings != null ){
                             existingRatingObjs.existent.push(existingRatings);
                         }else{
-                            existingRatingObjs.nonExistent.push(i);
+                            existingRatingObjs.nonExistent.push(j);
                         }
-                        done.push(i + " done");
+                        done.push(j + " done");
                     }
                 })
             }
 
             let waitForAsync;
             (waitForAsync = function(){
-                if(done.length != attributesLength){
+                if(done.length != attributes.length){
+                    console.log("Waiting in ratings class");
+                    console.log({done: done, size: attributes, errors: errors});
                     setTimeout(function(){
                         waitForAsync();
                     }, 1000)
-                }else if(errors.length){
+                }else if(errors.length > 0){
                     callback(errors[0], false);
                 }else{
                     callback(false, existingRatingObjs);
@@ -167,7 +214,12 @@ var RatingSchema = new Schema(
                         callback(err, updatedRating);
                     }
                     actUser.updateAttributes(function(err, updatedUser){
-                        callback(err, updatedUser);
+                        if(err){
+                            return callback(err, updatedUser);
+                        }
+                        updatedUser.save(function(err, newUser){
+                            return callback(err, newUser);
+                        })
                     })
                 })
             })

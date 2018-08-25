@@ -5,8 +5,8 @@ var act_controller = require('../controllers/activityController');
 var checkForSession = function(req){
     var sesh = req.session;
     if(sesh.login === undefined || !sesh.actType === undefined){
-        sesh.login = "CharoletteCarte";
-        sesh.actType = "Football";
+       // sesh.login = "x0013178732";
+       // sesh.actType = "Football";
         return false;
     }
     return true;
